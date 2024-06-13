@@ -122,34 +122,49 @@ When you add a new recipe, this file will need to be updated before building
       develop: False
 ```
 
-### Uenv and their meta data are stored in JFrog registries.
+### Uenv and their meta data are stored in a JFrog registry.
 
-The registries are OCI container registries.
+The registry are OCI container registries.
+- there are two namespaces:
+    1. `build`: the CI/CD pipeline pushes images here
+        - the unique id of the pipeline is used as the image tag `system/uarch/name/version:buildid`
+        - `uenv image find --build` will show all images built for the vCluster it is called on (the `CLUSTER_NAME`) env. var is used.
+    2. 
 
-## Guide To Creating UENV
+TODO: JFrog repository address
 
-### Know your target audience: provide what they need
+The CI/CD pipeline and `uenv` CLI tool use oras to
 
-only need the tool - just provide the tool.
+- `oras pull`
 
-## Choosing a compiler
+### To access non-public namespaces (e.g. `build`), you have to configure JFrog tokens
 
-For bootstrap - pick the same one that other uenv use on the same uarch.
+Go to 
 
-TODO:
-- the uenv team create documentation that fixes the version
-- Ben gets around to allowing support for using the system compiler for bootstrap and main gcc
-    - reduce size of images that don't require or provide a compiler (e.g. *linaro-forge*)
-    - HPE no longer install GCC - they will use the `gcc-x` implementation provided by SUSE.
+## There are best-practices for creating a uenv recipe
 
-## Configuring environments
+Follow the guide: https://eth-cscs.github.io/alps-uenv/pkg-application-tutorial/
 
+## Write documentation for uenv
 
-## Documentation
+The documentation is on the eth-cscs github.io:
+
+https://eth-cscs.github.io/alps-uenv/
+
+Which is generated from the markdown using (Material for MKDocs](https://squidfunk.github.io/mkdocs-material/)
+- :shushing_face: ... much easier to write and structure than confluence.
+- use the features
 
 ### adding documentation in the recipe repo keeps it up to date
 
+Use the KB article to give a quick overview of information that doesn't go out of date:
+
+Document the versions, environment variables, etc in the docs.
+- it is expected that documentation will be updated
+
 ### documentation can be updated independently of recipe changes
+
+Discover a bug and the fix is to set an environment variable: push the information to the documentation page
 
 ### If you expect users to use the uenv a specific way - document it
 
@@ -159,8 +174,115 @@ https://eth-cscs.github.io/alps-uenv/uenv-linaro-forge/#usage-notes
 Example of documenting how to build:
 https://eth-cscs.github.io/alps-uenv/uenv-qe/#using-modules
 
-### provide tips, tricks and workarounds
+### provide tips, best practices and workarounds
 
 Environment variables, slurm parameters and known issues can be documented clearly
 
 https://eth-cscs.github.io/alps-uenv/uenv-gromacs/#how-to-run
+
+## pro tips
+
+### File system views are great, when they work.
+
+File system views are great: a single command configures the environment:
+
+```bash
+uenv view develop
+```
+
+*you need to take care to curate the environment*
+
+### It is a pain to specify which compiler to use when using more than one toolchain
+
+Frequently both the nvhpc and gcc toolchains have to be used to build an environment that requires the nvhpc Fortran compiler for OpenACC
+- e.g. ICON, Quantumespresso, and VASP
+
+In the current version of stackinator we are at the mercy of the concretizer:
+```yaml
+  compiler:
+      - toolchain: gcc
+        spec: gcc
+      - toolchain: llvm
+        spec: nvhpc
+  mpi:
+      spec: cray-mpich@8.1.29%nvhpc
+      gpu: cuda
+  specs:
+  - boost%gcc ~mpi
+  - python@3.10%gcc
+  - cmake%gcc
+  - cuda@12.3%gcc
+  - hdf5%gcc
+  - hwloc%gcc
+  - netcdf-c%gcc
+  - netcdf-cxx4%gcc
+  - netcdf-fortran%nvhpc
+  - numactl%gcc
+  - osu-micro-benchmarks@5.9%nvhpc
+  # everything needed for nccl on SS11
+  - aws-ofi-nccl@master%gcc
+  - nccl%gcc
+  - nccl-tests%gcc
+  # The following are required to stop spack from using nvhpc to build
+  # basic dependencies, some of which don't compile with nvc etc.
+  # Explicitly excluded as modules.
+  - autoconf%gcc
+  - automake%gcc
+  - ca-certificates-mozilla%gcc
+  - diffutils%gcc
+  - gnuconfig%gcc
+  - libiconv%gcc
+  - libxcrypt%gcc
+  - libxml2%gcc
+  - m4%gcc
+  - ncurses%gcc
+  - openssl%gcc
+  - perl%gcc
+  - xz%gcc
+  - zlib%gcc
+  - zstd%gcc
+  - c-blosc%gcc
+  - libaec%gcc
+  - jasper%gcc
+  - patchelf%gcc
+  - gmake%gcc
+```
+
+There is a PR open in Stackinator that will enforce that the first compiler will be the default, so that it becomes:
+
+```yaml
+  compiler:
+      - toolchain: gcc
+        spec: gcc
+      - toolchain: llvm
+        spec: nvhpc
+  mpi:
+      spec: cray-mpich@8.1.29%nvhpc
+      gpu: cuda
+  specs:
+  - boost ~mpi
+  - python@3.10
+  - cmake
+  - cuda@12.3
+  - hdf5
+  - hwloc
+  - netcdf-c
+  - netcdf-cxx4
+  - netcdf-fortran%nvhpc
+  - numactl
+  - osu-micro-benchmarks@5.9%nvhpc
+  # everything needed for nccl on SS11
+  - aws-ofi-nccl@master
+  - nccl
+  - nccl-tests
+```
+
+* by default you want to build everything with `gcc` insofar as it is possible
+    - believe me, you really do
+* so set
+
+*NOTE*: Always annotate the `cray-mpich` spec with a compiler in multi 
+* if you don't target Fortran, you can probably get away with cray-mpich%gcc
+    - C/C++ have an ABI
+* Fortran modules generated by different toolchains are incompatible
+    - the `.mod` files provided must match the 
