@@ -10,7 +10,7 @@ Software stacks can be programming environments, apps and tools
 Spack is used to build the software
 - only expose the features required for "CSCS-style" software stacks
 
-## Uenv are from a recipe using the stackinator tool
+## Uenv target a system, built from a recipe using the stackinator tool
 
 Stackinator is like CMake: convert a recipe into a directory tree ready to hit "make"
 
@@ -146,8 +146,8 @@ The CI/CD pipeline and `uenv` CLI tool use oras to interact with the registry:
 
 ### To access non-public namespaces (e.g. `build`), you have to configure JFrog tokens
 
-To get access to deploy (and VASP etc, if you have access):
-1. log into the CSCS VPN
+To get access to deploy (and VASP etc):
+1. log in to the CSCS VPN
 2. then go to https://jfrog.svc.cscs.ch
 3. click "log in" in the top rhs corner
 4. click "set me up" in the drop down menu in top RHS corner
@@ -228,7 +228,7 @@ https://eth-cscs.github.io/alps-uenv/
 
 Which is generated from the markdown using (Material for MKDocs](https://squidfunk.github.io/mkdocs-material/)
 - :shushing_face: ... much easier to write and structure than confluence.
-- use the features
+- use the features of Material to improve readability and presentation of information.
 
 ### adding documentation in the recipe repo keeps it up to date
 
