@@ -196,7 +196,7 @@ By default, when you create a file system view for an environment, Spack will li
 - root specs and all of their dependencies.
 
 This causes myriad problems when a view sets `LD_LIBRARY_PATH`:
-- some software on the system, e.g. `git`, `more` and ... drumroll... libfabric will use `LD_LIBRARY_PATH` to find dependencies like
+- some software on the system, e.g. `git`, `more` and ... drumroll... libfabric will use `LD_LIBRARY_PATH` to find dependencies like:
 
 ```
         /usr/bin/ld: /usr/lib64/libssh.so.4: undefined reference to `EVP_KDF_CTX_new_id@OPENSSL_1_1_1d'
@@ -205,12 +205,31 @@ This causes myriad problems when a view sets `LD_LIBRARY_PATH`:
         /usr/bin/ld: /usr/lib64/libssh.so.4: undefined reference to `EVP_KDF_derive@OPENSSL_1_1_1d'
 ```
 
+- `libssh.so` expects a symbol in `libcrypto.so` - but gets the version built in the uenv which does not have the same symbols as `/user/lib64/libcrypto.so`
+
+TODO: we will start using the security libraries provided by the system by default.
+
 #### Use `link:roots` and include _every_ spec that you need
 
+Only packages in the list of specs will be linked:
+```yaml
+  views:
+    develop:
+      link: roots
+```
 
-#### Only add specs that you 
+You will need to add every single spec that is required by your view.
 
-Don't add specs to the env if they are not needed
+#### Only add specs that you need
+
+To avoid collisions.
+
+> **Warning**
+> *Ben's first law of providing software*
+> If users find it, they will use it.
+
+TODO: write some reframe tests that try to trigger known issues
+- e.g. `more` vs. `ncurses`
 
 ### It is a pain to specify which compiler to use when using more than one toolchain
 
