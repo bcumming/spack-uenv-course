@@ -9,37 +9,51 @@ Spack Course
 - Spack is used to build the software
     - only expose the features required for CSCS-style software stacks
 
-## Uenv are built in stages from a recipe
+## Uenv are from a recipe using the stackinator tool
 
 Stackinator is like CMake: convert a recipe into a directory tree ready to hit "make"
+
+[An example of the gromacs recipe](https://github.com/eth-cscs/alps-uenv/blob/main/recipes/gromacs/2024/gh200-mpi/compilers.yaml)
+
+* `configure.yaml`
+    - set the version of Spack - prefer fixed versions
+* `compilers.yaml`
+    - choose versions of compilers that other packages for the same target uarch use
+
+The 
 - create build path
 - download Spack into build path
 - create config
 - generate the compiler and environment build paths
-- generate the Makefiles that coordinate 
+- generate the Makefiles build the software
+
+## uenv are built using make, which builds the environments in the correct order
 
 The following stages are performed when building an image:
 
-1 bootstrap
-2 pre install hook
-3 configure build cache
-4 build compilers
+1. bootstrap
+2. pre install hook
+3. configure build cache
+4. build compilers
     - bootstrap
     - gcc
     - (optional) nvhpc
-5 generate-config
+5. generate-config
     - this stage generates the full `config` path
-6 build environments
+6. build environments
     - build each environment in parallel
-7 generate modules
-8 post install hook
-9 generate squashfs image
+7. generate modules
+8. post install hook
+9. generate squashfs image
 
 Why do we use Makefiles?
 - Because Harmen likes Makefiles
-    - if Harmen accepts credit for all the good things he gave us, he has to take responsibility
-- Because building a uenv requires a sequence of 
-Of interest to you are
+- Because we are not building the whole stack as a single Spack environment
+    - Build multiple environments that depend on one another
+    - And steps like updating build caches, creating modules, etc
+- Because it allows us to use a make server to concurrently run parallel package builds.
+
+Some steps of interest:
 
 2. pre-install hook:
     - runs an arbitrary script
@@ -57,7 +71,6 @@ Of interest to you are
     - then builds a gcc compiler with that bootstrapped compiler
     - optionally "builds" nvhpc
 5. environments
-    - 
 7. generate modules
     - optional: turn them off if you don't intend to provide them
         - only provide them if you intend to cultivate and water them, and support user requests.
