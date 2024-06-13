@@ -81,17 +81,50 @@ Some steps of interest:
     - use case: add some extra meta-data specific to your workflow:
         - https://github.com/eth-cscs/alps-uenv/blob/main/recipes/wcp/icon/v1/a100/post-install
 
-## How UENV are managed
+## UENV deployed on Alps (and AlpsM/AlpsE) are managed in a GitHub repository
 
-### system/uarch/name/version/tag
+https://github.com/eth-cscs/alps-uenv
 
+The repository contains:
+- recipes for all of the uenv
+- CI/CD configuration (GitLab yaml and python scripts)
+- scripts that run each stage
+    - building the uenv
+    - running reframe tests
 
-Which versions should I support? Only the ones that you have to deploy on.
-- don't lose sleep over Mi250x
+### On Alps uenv are labelled: system/uarch/name/version:tag
+
+Documented on Confluence: https://confluence.cscs.ch/display/VCUE/UENV
 
 ### The description of clusters and mapping of recipes to clusters is in config.yaml
 
-### Uenv and their meta data are stored in JFrog DockerHub registries.
+[`alps-uenv/config.yaml`](https://github.com/eth-cscs/alps-uenv/blob/07995366d34f7845163fe418938258dfd4b41a36/config.yaml)
+
+When you add a new recipe, this file will need to be updated before building 
+
+```yaml
+  cp2k:
+    "2023":
+      recipes:
+        # zen2 and zen3 targets use the same recipe
+        zen2: 2023/mc
+        zen3: 2023/mc
+        a100: 2023/a100
+      deploy:
+        eiger: [zen2]
+      develop: False
+    "2024.1":
+      recipes:
+        gh200: 2024.1/gh200
+      deploy:
+        santis: [gh200]
+        todi: [gh200]
+      develop: False
+```
+
+### Uenv and their meta data are stored in JFrog registries.
+
+The registries are OCI container registries.
 
 ## Guide To Creating UENV
 
@@ -99,10 +132,15 @@ Which versions should I support? Only the ones that you have to deploy on.
 
 only need the tool - just provide the tool.
 
-
 ## Choosing a compiler
 
-For bootstrap - pick the same one that other uenv use on the same uarch
+For bootstrap - pick the same one that other uenv use on the same uarch.
+
+TODO:
+- the uenv team create documentation that fixes the version
+- Ben gets around to allowing support for using the system compiler for bootstrap and main gcc
+    - reduce size of images that don't require or provide a compiler (e.g. *linaro-forge*)
+    - HPE no longer install GCC - they will use the `gcc-x` implementation provided by SUSE.
 
 ## Configuring environments
 
