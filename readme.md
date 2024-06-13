@@ -224,8 +224,8 @@ You will need to add every single spec that is required by your view.
 
 To avoid collisions.
 
-> **Warning**
-> *Ben's first law of providing software*
+> :warning: **Ben's first law of providing software**
+>
 > If users find it, they will use it.
 
 TODO: write some reframe tests that try to trigger known issues
