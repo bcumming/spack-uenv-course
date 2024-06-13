@@ -184,13 +184,33 @@ https://eth-cscs.github.io/alps-uenv/uenv-gromacs/#how-to-run
 
 ### File system views are great, when they work.
 
-File system views are great: a single command configures the environment:
+File system views are great! a single command configures the environment:
 
 ```bash
 uenv view develop
 ```
 
-*you need to take care to curate the environment*
+**take care to curate the environment**
+
+By default, when you create a file system view for an environment, Spack will link every package in the environment into the view
+- root specs and all of their dependencies.
+
+This causes myriad problems when a view sets `LD_LIBRARY_PATH`:
+- some software on the system, e.g. `git`, `more` and ... drumroll... libfabric will use `LD_LIBRARY_PATH` to find dependencies like
+
+```
+        /usr/bin/ld: /usr/lib64/libssh.so.4: undefined reference to `EVP_KDF_CTX_new_id@OPENSSL_1_1_1d'
+        /usr/bin/ld: /usr/lib64/libssh.so.4: undefined reference to `EVP_KDF_ctrl@OPENSSL_1_1_1d'
+        /usr/bin/ld: /usr/lib64/libssh.so.4: undefined reference to `EVP_KDF_CTX_free@OPENSSL_1_1_1d'
+        /usr/bin/ld: /usr/lib64/libssh.so.4: undefined reference to `EVP_KDF_derive@OPENSSL_1_1_1d'
+```
+
+#### Use `link:roots` and include _every_ spec that you need
+
+
+#### Only add specs that you 
+
+Don't add specs to the env if they are not needed
 
 ### It is a pain to specify which compiler to use when using more than one toolchain
 
